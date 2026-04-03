@@ -38,6 +38,12 @@ class ForbiddenError extends ApiError {
 }
 
 function globalErrorHandler(err, req, res, next) {
+    if (!(err instanceof ApiError)) {
+        err = new ApiError(500, "Internal Server Error", {
+            code: "UNEXPECTED_ERROR",
+            details: err.message
+        });
+    }
     if (err.isOperational) {
         return res.status(err.statusCode).json({
             status: err.status,
@@ -49,7 +55,7 @@ function globalErrorHandler(err, req, res, next) {
     console.error("Unexpected Error:", err);
 
     res.status(500).json({
-        status: "error",
+        status: "Server Error",
         message: "Something went wrong"
     });
 }

@@ -5,7 +5,7 @@ import request from "supertest";
 
 import { authMiddleware } from "../src/middlewares/authMiddleware.js";
 import userRouter from "../src/routes/userRoutes.js";
-import { asyncHandler, ForbiddenError, globalErrorHandler } from "../src/utils/apiError.js";
+import { ForbiddenError, globalErrorHandler } from "../src/utils/apiError.js";
 
 // mock services
 import * as userService from "../src/services/userService.js";
@@ -32,7 +32,7 @@ function createTestApp() {
     app.use(express.json());
     app.use(cookieParser());
 
-    app.use("/users", asyncHandler(authMiddleware), userRouter);
+    app.use("/users", authMiddleware, userRouter);
 
     app.use(globalErrorHandler);
 

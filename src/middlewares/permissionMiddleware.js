@@ -1,8 +1,8 @@
 import { getRoleById } from "../repository/roleRepo.js";
-import { ForbiddenError, UnauthorizedError } from "../utils/apiError.js";
+import { asyncHandler, ForbiddenError, UnauthorizedError } from "../utils/apiError.js";
 
 function permissionMiddleware(allowedRoles = []) {
-    return (req, res, next) => {
+    return asyncHandler(async (req, res, next) => {
         if (!req.user) {
             return next(new UnauthorizedError("User not authenticated"));
         }
@@ -22,7 +22,7 @@ function permissionMiddleware(allowedRoles = []) {
         }
 
         next();
-    };
+    });
 
 }
 

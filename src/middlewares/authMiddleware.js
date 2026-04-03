@@ -1,8 +1,8 @@
 import jwt from "jsonwebtoken";
 import { findById } from "../repository/userRepo.js";
-import { UnauthorizedError } from "../utils/apiError.js";
+import { asyncHandler, UnauthorizedError } from "../utils/apiError.js";
 
-async function authMiddleware(req, res, next) {
+const authMiddleware = asyncHandler(async (req, res, next) => {
     try {
         const token = req.cookies.token;
 
@@ -36,6 +36,6 @@ async function authMiddleware(req, res, next) {
 
         next(err);
     }
-}
+})
 
 export { authMiddleware };

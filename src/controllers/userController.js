@@ -4,7 +4,7 @@ import { asyncHandler } from "../utils/apiError.js";
 const createUserController = asyncHandler(async (req, res, next) => {
     const { email, password } = req.body
     if (!email || !password) {
-        return next(new ApiError(400, "Email and password required"));
+        throw new ApiError(400, "Email and password required");
     }
     if (!emailRegex.test(email)) {
         throw new ApiError(400, "Invalid email format");
@@ -20,7 +20,7 @@ const createUserController = asyncHandler(async (req, res, next) => {
     })
 })
 
-const getAllUsersController = (req, res, next) => {
+const getAllUsersController = asyncHandler(async (req, res, next) => {
     const users = getUsersService()
 
     res.status(200).json({
@@ -28,16 +28,16 @@ const getAllUsersController = (req, res, next) => {
         results: users.length,
         data: users
     })
-}
+})
 
-const getUserController = (req, res) => {
+const getUserController = asyncHandler(async (req, res) => {
     const user = getUserByIdService(req.user, req.params.id);
 
     res.status(200).json({
         status: "success",
         data: user
     });
-};
+});
 
 const updateUserController = asyncHandler(async (req, res) => {
     const updatedUser = updateUserService(
@@ -52,16 +52,16 @@ const updateUserController = asyncHandler(async (req, res) => {
     });
 });
 
-const clearAllController = (req, res) => {
+const clearAllController = asyncHandler(async (req, res) => {
     clearAllTablesService(req.user);
 
     res.status(200).json({
         status: "success",
         message: "All tables cleared"
     });
-};
+});
 
-const clearTableController = (req, res) => {
+const clearTableController = asyncHandler(async (req, res) => {
     const { table } = req.params;
 
     clearTableService(req.user, table);
@@ -70,7 +70,7 @@ const clearTableController = (req, res) => {
         status: "success",
         message: `Table '${table}' cleared`
     });
-};
+});
 
 export { clearAllController, clearTableController, createUserController, getAllUsersController, getUserController, updateUserController };
 

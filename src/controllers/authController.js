@@ -6,7 +6,7 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const loginController = asyncHandler(async (req, res, next) => {
     const { email, password } = req.body
     if (!email || !password) {
-        return next(new ApiError(400, "Email and password required"));
+        throw new ApiError(400, "Email and password required");
     }
     if (!emailRegex.test(email)) {
         throw new ApiError(400, "Invalid email format");
@@ -31,7 +31,7 @@ const loginController = asyncHandler(async (req, res, next) => {
 const signupController = asyncHandler(async (req, res, next) => {
     const { email, password } = req.body
     if (!email || !password) {
-        return next(new ApiError(400, "Email and password required"));
+        throw new ApiError(400, "Email and password required");
     }
     if (!emailRegex.test(email)) {
         throw new ApiError(400, "Invalid email format");
