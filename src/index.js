@@ -5,7 +5,7 @@ import { initDB, seedDB } from "./db/db.js";
 import { authMiddleware } from "./middlewares/authMiddleware.js";
 import authRouter from "./routes/authRoutes.js";
 import userRouter from "./routes/userRoutes.js";
-import { asyncHandler, globalErrorHandler } from "./utils/apiError.js";
+import { globalErrorHandler } from "./utils/apiError.js";
 
 dotenv.config()
 
@@ -20,7 +20,7 @@ app.use(cookieParser());
 
 // routes...
 app.use("/auth", authRouter)
-app.use("/users", asyncHandler(authMiddleware), userRouter)
+app.use("/users", authMiddleware, userRouter)
 
 app.use(globalErrorHandler) // must be at the end
 

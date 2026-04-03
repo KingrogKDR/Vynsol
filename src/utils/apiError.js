@@ -1,3 +1,5 @@
+import logger from "./logger.js";
+
 class ApiError extends Error {
     constructor(
         statusCode,
@@ -38,6 +40,14 @@ class ForbiddenError extends ApiError {
 }
 
 function globalErrorHandler(err, req, res, next) {
+    logger.error({
+        statusCode: err.statusCode,
+        message: err.message,
+        path: req.originalUrl,
+        method: req.method,
+        userId: req.user?.id || null
+    });
+
     if (!(err instanceof ApiError)) {
         err = new ApiError(500, "Internal Server Error", {
             code: "UNEXPECTED_ERROR",
@@ -51,8 +61,6 @@ function globalErrorHandler(err, req, res, next) {
             code: err.code || null
         });
     }
-
-    console.error("Unexpected Error:", err);
 
     res.status(500).json({
         status: "Server Error",

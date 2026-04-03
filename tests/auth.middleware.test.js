@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import request from "supertest";
 import { authMiddleware } from "../src/middlewares/authMiddleware.js";
 import { findById } from "../src/repository/userRepo.js";
-import { asyncHandler, globalErrorHandler } from "../src/utils/apiError.js";
+import { globalErrorHandler } from "../src/utils/apiError.js";
 
 jest.mock("../src/repository/userRepo.js");
 
@@ -25,7 +25,7 @@ function createTestApp() {
     app.use(cookieParser());
 
     // dummy protected route
-    app.post("/protected", asyncHandler(authMiddleware), (req, res) => {
+    app.post("/protected", authMiddleware, (req, res) => {
         res.status(200).json({
             message: "Access granted",
             user: req.user
