@@ -15,12 +15,12 @@ app.use(cookieParser());
 
 
 // public routes
-app.use("/auth", rateLimiter({ type: "ip" }), authRouter)
+app.use("/api/auth", rateLimiter({ type: "ip" }), authRouter)
 
 // private routes
-app.use("/users", authMiddleware, rateLimiter({ type: "user" }), userRouter)
-app.use("/records", authMiddleware, rateLimiter({ type: "user" }), recordRouter)
-app.use("/dashboard", authMiddleware, rateLimiter({ type: "user" }), dashboardRouter)
+app.use("/api/users", authMiddleware, rateLimiter({ type: "user" }), userRouter)
+app.use("/api/records", authMiddleware, rateLimiter({ type: "user" }), recordRouter)
+app.use("/api/dashboard", authMiddleware, rateLimiter({ type: "user" }), dashboardRouter)
 
 app.use(globalErrorHandler) // must be at the end
 

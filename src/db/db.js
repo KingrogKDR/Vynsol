@@ -9,16 +9,17 @@ function initDB() {
         db.exec(`
         CREATE TABLE IF NOT EXISTS role (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            role_name TEXT NOT NULL UNIQUE
+            role_name TEXT NOT NULL UNIQUE CHECK (role_name IN ('viewer', 'analyst', 'admin'))
         );
 
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            email TEXT NOT NULL UNIQUE,
+            email TEXT NOT NULL,
             password TEXT NOT NULL,
             role_id INTEGER,
             status TEXT DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            deleted_at INTEGER,
             FOREIGN KEY (role_id) REFERENCES role(id)
         );
         CREATE TABLE IF NOT EXISTS records (
@@ -31,11 +32,13 @@ function initDB() {
             notes TEXT,
             created_at INTEGER DEFAULT (strftime('%s','now')),
             updated_at INTEGER DEFAULT (strftime('%s','now')),
-            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            deleted_at INTEGER,
+            FOREIGN KEY (user_id) REFERENCES users(id)
         );
         CREATE INDEX IF NOT EXISTS idx_user_type ON records(user_id, type);
         CREATE INDEX IF NOT EXISTS idx_user_category ON records(user_id, category);
         CREATE INDEX IF NOT EXISTS idx_user_date ON records(user_id, date);
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email_active ON users(email) WHERE deleted_at IS NULL;
         `);
 
         console.log("Database & tables created");

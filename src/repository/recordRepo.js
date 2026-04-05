@@ -1,5 +1,6 @@
 import db from "../db/connection.js";
 import { ApiError } from "../utils/apiError.js";
+import { NOT_DELETED } from "../utils/constants.js";
 
 function createRecord(record) {
     try {
@@ -35,7 +36,7 @@ function createRecord(record) {
 function getRecordById(id) {
     try {
         const query = `
-            SELECT * from records where id = ?
+            SELECT * from records where id = ? AND ${NOT_DELETED}
         `
         const result = db.prepare(query).get(id)
 
@@ -47,7 +48,7 @@ function getRecordById(id) {
 
 function findRecords(filters) {
     try {
-        let query = `SELECT * FROM records WHERE 1=1`;
+        let query = `SELECT * FROM records WHERE ${NOT_DELETED}`;
         const values = [];
 
         if (filters.user_id !== undefined) {
@@ -108,6 +109,7 @@ function updateRecordById(recordId, updates) {
         UPDATE records
         SET ${fields.join(", ")}
         WHERE id = ?
+        AND ${NOT_DELETED}
     `;
 
     values.push(recordId);
@@ -116,7 +118,12 @@ function updateRecordById(recordId, updates) {
 }
 
 function deleteRecordById(recordId) {
-    const query = `DELETE FROM records WHERE id = ?`;
+    const query = `
+        UPDATE records
+        SET deleted_at = strftime('%s', 'now')
+        WHERE id = ?
+        AND ${NOT_DELETED}
+    `;
 
     const result = db.prepare(query).run(recordId);
 

@@ -1,9 +1,9 @@
-import { clearAllTablesService, clearTableService, createUserService, deleteUserService, getUserByIdService, getUsersService, updateUserService } from "../services/userService.js";
+import { createUserService, deleteUserService, getUserByIdService, getUsersService, updateUserService } from "../services/userService.js";
 import { ApiError, asyncHandler } from "../utils/apiError.js";
 import { emailRegex } from "../utils/constants.js";
 
 const createUserController = asyncHandler(async (req, res, next) => {
-    const { email, password } = req.body
+    const { email, password, role } = req.body
     if (!email || !password) {
         throw new ApiError(400, "Email and password required");
     }
@@ -13,7 +13,7 @@ const createUserController = asyncHandler(async (req, res, next) => {
     if (password.length < 6) {
         throw new ApiError(400, "Password must be at least 6 characters");
     }
-    const data = await createUserService(email, password)
+    const data = await createUserService(email, password, role)
     res.status(201).json({
         status: "success",
         data,
@@ -65,25 +65,5 @@ const deleteUserController = asyncHandler(async (req, res) => {
     });
 });
 
-const clearAllController = asyncHandler(async (req, res) => {
-    clearAllTablesService(req.user);
-
-    res.status(200).json({
-        status: "success",
-        message: "All tables cleared"
-    });
-});
-
-const clearTableController = asyncHandler(async (req, res) => {
-    const { table } = req.params;
-
-    clearTableService(req.user, table);
-
-    res.status(200).json({
-        status: "success",
-        message: `Table '${table}' cleared`
-    });
-});
-
-export { clearAllController, clearTableController, createUserController, deleteUserController, getAllUsersController, getUserController, updateUserController };
+export { createUserController, deleteUserController, getAllUsersController, getUserController, updateUserController };
 

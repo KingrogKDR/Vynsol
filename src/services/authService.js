@@ -2,6 +2,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { createUser, findByEmail, findById } from "../repository/userRepo.js";
 import { ApiError } from "../utils/apiError.js";
+import { ROLE_ID } from "../utils/constants.js";
 
 async function loginService(email, password) {
     const user = findByEmail(email)
@@ -49,7 +50,9 @@ async function signupService(email, password) {
 
     const hashedPassword = await bcrypt.hash(password, 10)
 
-    const userId = createUser(email, hashedPassword)
+    const roleId = ROLE_ID.VIEWER
+
+    const userId = createUser(email, hashedPassword, roleId)
 
     const user = findById(userId)
 

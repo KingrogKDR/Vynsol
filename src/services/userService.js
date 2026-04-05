@@ -1,11 +1,11 @@
 import bcrypt from "bcrypt";
-import { deleteUserById, getRoleById, getRoleIdByName } from "../repository/roleRepo.js";
-import { clearAllTables, clearTable, createUser, findByEmail, getAllUsers, getUserById, updateUserById } from "../repository/userRepo.js";
+import { getRoleIdByName } from "../repository/roleRepo.js";
+import { createUser, deleteUserById, findByEmail, getAllUsers, getUserById, updateUserById } from "../repository/userRepo.js";
 import { ApiError, BadRequestError, ForbiddenError, NotFoundError } from "../utils/apiError.js";
 import { ROLE_ID, ROLES } from "../utils/constants.js";
 import { sanitizeUpdateData, validateUserUpdate } from "../utils/lib.js";
 
-async function createUserService(email, password) {
+async function createUserService(email, password, role) {
     const existingUser = findByEmail(email)
 
     if (existingUser) {
@@ -14,9 +14,21 @@ async function createUserService(email, password) {
         });
     }
 
+    if (!role || !Object.values(ROLES).includes(role.toLowerCase())) {
+        throw new BadRequestError("Invalid role provided", {
+            code: "INVALID_ROLE"
+        });
+    }
+
+    const normalizedRole = role
+        ? role.toUpperCase()
+        : "VIEWER";
+
+    const roleId = ROLE_ID[normalizedRole];
+
     const hashedPassword = await bcrypt.hash(password, 10)
 
-    const userId = createUser(email, hashedPassword)
+    const userId = createUser(email, hashedPassword, roleId)
 
     return {
         id: userId,
@@ -80,7 +92,7 @@ function updateUserService(requestingUser, targetUserId, data) {
 }
 
 function deleteUserService(requestingUser, targetUserId) {
-    if (requestingUser.role !== ROLES.ADMIN) {
+    if (requestingUser.role_id !== ROLE_ID.ADMIN) {
         throw new ForbiddenError("Only admins can delete users");
     }
 
@@ -98,23 +110,6 @@ function deleteUserService(requestingUser, targetUserId) {
     deleteUserById(targetUserId);
 }
 
-function clearAllTablesService(user) {
-    const userRole = getRoleById(user.role_id)
-    if (userRole !== ROLES.ADMIN) {
-        throw new ForbiddenError("Only admins can clear database");
-    }
 
-    clearAllTables();
-}
-
-function clearTableService(user, tableName) {
-    const userRole = getRoleById(user.role_id)
-    if (userRole !== ROLES.ADMIN) {
-        throw new ForbiddenError("Only admins can clear tables");
-    }
-
-    clearTable(tableName);
-}
-
-export { clearAllTablesService, clearTableService, createUserService, deleteUserService, getUserByIdService, getUsersService, updateUserService };
+export { createUserService, deleteUserService, getUserByIdService, getUsersService, updateUserService };
 

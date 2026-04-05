@@ -110,7 +110,9 @@ function getMonthlyTrends(filters) {
 function getWeeklyTrends(filters) {
     let query = `
         SELECT
-            strftime('%Y-%W', date/1000, 'unixepoch') as week,
+            strftime('%Y-%m', date/1000, 'unixepoch') || '-W' ||
+            ((CAST(strftime('%d', date/1000, 'unixepoch') AS INTEGER) - 1) / 7 + 1)
+            as week,
             SUM(CASE WHEN type = 'INCOME' THEN amount ELSE 0 END) as income,
             SUM(CASE WHEN type = 'EXPENSE' THEN amount ELSE 0 END) as expense
         FROM records

@@ -5,7 +5,7 @@ import request from "supertest";
 
 import { authMiddleware } from "../src/middlewares/authMiddleware.js";
 import recordRouter from "../src/routes/recordRoutes.js";
-import { globalErrorHandler } from "../src/utils/apiError.js";
+import { globalErrorHandler, NotFoundError } from "../src/utils/apiError.js";
 
 import { rateLimiter } from "../src/middlewares/rateLimiter.js";
 import { getRoleById } from "../src/repository/roleRepo.js";
@@ -117,14 +117,13 @@ test("PATCH /records/:id - viewer can update", async () => {
     expect(res.statusCode).toBe(200);
 });
 
-
-test("DELETE /records/:id - viewer can delete", async () => {
+test("DELETE /records/:id - should soft delete record", async () => {
     const app = createTestApp();
 
     findById.mockReturnValue({ id: "1", role_id: 1, status: "active" });
     getRoleById.mockReturnValue(ROLES.VIEWER);
 
-    recordService.deleteRecordService.mockImplementation(() => { });
+    recordService.deleteRecordService.mockReturnValue(1);
 
     const token = generateToken({ user_id: "1" });
 
@@ -133,6 +132,27 @@ test("DELETE /records/:id - viewer can delete", async () => {
         .set("Cookie", [`token=${token}`]);
 
     expect(res.statusCode).toBe(200);
+    expect(recordService.deleteRecordService).toHaveBeenCalledWith(
+        expect.objectContaining({ id: "1" }),
+        "5"
+    );
+});
+
+test("DELETE /records/:id - unauthorized role should fail", async () => {
+    const app = createTestApp();
+
+    findById.mockReturnValue({ id: "2", role_id: 2, status: "active" });
+    getRoleById.mockReturnValue(ROLES.ANALYST);
+
+    const token = generateToken({ user_id: "2" });
+
+    const res = await request(app)
+        .delete("/records/5")
+        .set("Cookie", [`token=${token}`]);
+
+    expect(res.statusCode).toBe(403);
+
+    expect(recordService.deleteRecordService).not.toHaveBeenCalled();
 });
 
 
@@ -140,7 +160,7 @@ test("POST /records - unauthorized role should fail", async () => {
     const app = createTestApp();
 
     findById.mockReturnValue({ id: "3", role_id: 4, status: "active" });
-    getRoleById.mockReturnValue("GUEST"); // not allowed
+    getRoleById.mockReturnValue("GUEST");
 
     const token = generateToken({ user_id: "3" });
 
@@ -150,4 +170,64 @@ test("POST /records - unauthorized role should fail", async () => {
         .set("Cookie", [`token=${token}`]);
 
     expect(res.statusCode).toBe(403);
+});
+
+test("GET /records/:id - should return 404 for soft deleted record", async () => {
+    const app = createTestApp();
+
+    findById.mockReturnValue({ id: "1", role_id: 1, status: "active" });
+    getRoleById.mockReturnValue(ROLES.VIEWER);
+
+    recordService.getRecordByIdService.mockImplementation(() => {
+        throw new NotFoundError("Record not found")
+    });
+
+    const token = generateToken({ user_id: "1" });
+
+    const res = await request(app)
+        .get("/records/5")
+        .set("Cookie", [`token=${token}`]);
+
+    expect(res.statusCode).toBe(404);
+});
+
+test("PATCH /records/:id - should fail for soft deleted record", async () => {
+    const app = createTestApp();
+
+    findById.mockReturnValue({ id: "1", role_id: 1, status: "active" });
+    getRoleById.mockReturnValue(ROLES.VIEWER);
+
+    recordService.updateRecordService.mockImplementation(() => {
+        throw new NotFoundError("Record not found")
+    });
+
+    const token = generateToken({ user_id: "1" });
+
+    const res = await request(app)
+        .patch("/records/5")
+        .send({ amount: 200 })
+        .set("Cookie", [`token=${token}`]);
+
+    expect(res.statusCode).toBe(404);
+});
+
+test("GET /records - should not include soft deleted records", async () => {
+    const app = createTestApp();
+
+    findById.mockReturnValue({ id: "2", role_id: 2, status: "active" });
+    getRoleById.mockReturnValue(ROLES.ANALYST);
+
+    recordService.getRecordsService.mockReturnValue([
+        { id: "1" }, // active
+        // deleted records should not appear here
+    ]);
+
+    const token = generateToken({ user_id: "2" });
+
+    const res = await request(app)
+        .get("/records")
+        .set("Cookie", [`token=${token}`]);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.data.length).toBe(1);
 });

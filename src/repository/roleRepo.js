@@ -1,9 +1,10 @@
 import db from "../db/connection.js";
+import { NotFoundError } from "../utils/apiError.js";
 
 function getRoleIdByName(roleName) {
     const row = db.prepare(
         `SELECT id FROM role WHERE role_name = ?`
-    ).get(roleName);
+    ).get(roleName.toLowerCase());
 
     if (!row) {
         throw new NotFoundError(`Role '${roleName}' not found`, {
@@ -27,13 +28,5 @@ function getRoleById(roleId) {
     return row.role_name;
 }
 
-function deleteUserById(userId) {
-    const query = `DELETE FROM users WHERE id = ?`;
-
-    const result = db.prepare(query).run(userId);
-
-    return result.changes; // number of rows affected
-}
-
-export { deleteUserById, getRoleById, getRoleIdByName };
+export { getRoleById, getRoleIdByName };
 

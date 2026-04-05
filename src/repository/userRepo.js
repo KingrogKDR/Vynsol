@@ -1,13 +1,12 @@
 import db from "../db/connection.js";
-import { ApiError } from "../utils/apiError.js";
-import { ALLOWED_TABLES_TO_MODIFY, ROLES } from "../utils/constants.js";
-import { getRoleIdByName } from "./roleRepo.js";
+import { NOT_DELETED } from "../utils/constants.js";
 
 function findByEmail(email) {
     const query = `
         SELECT id, email, password, role_id, status, created_at
         FROM users
         WHERE email = ?
+        AND ${NOT_DELETED}
     `;
 
     return db.prepare(query).get(email) || null;
@@ -18,13 +17,12 @@ function findById(userId) {
         SELECT id, role_id, status
         FROM users
         WHERE id = ?
+        AND ${NOT_DELETED}
     `
     return db.prepare(query).get(userId) || null;
 }
 
-function createUser(email, password) {
-    const viewerRoleId = getRoleIdByName(ROLES.VIEWER)
-
+function createUser(email, password, roleId) {
     const query = `
         INSERT INTO users (email, password, role_id) VALUES (?, ?, ?)
     `
@@ -32,7 +30,7 @@ function createUser(email, password) {
     const result = db.prepare(query).run(
         email,
         password,
-        viewerRoleId,
+        roleId,
     );
     return result.lastInsertRowid;
 }
@@ -46,6 +44,7 @@ function getAllUsers() {
             u.status
         FROM users u
         LEFT JOIN role r ON u.role_id = r.id
+        WHERE u.deleted_at IS NULL
     `
     return db.prepare(query).all();
 }
@@ -61,6 +60,7 @@ function getUserById(userId) {
         FROM users u
         LEFT JOIN role r ON u.role_id = r.id
         WHERE u.id = ?
+        AND ${NOT_DELETED}
     `;
 
     return db.prepare(query).get(userId) || null;
@@ -72,35 +72,28 @@ function updateUserById(userId, { role_id, status }) {
         SET role_id = COALESCE(?, role_id),
             status = COALESCE(?, status)
         WHERE id = ?
+        AND deleted_at IS NULL
     `;
 
     return db.prepare(query).run(role_id, status, userId);
 }
 
-function clearAllTables() {
-    const tx = db.transaction(() => {
-        db.exec("PRAGMA foreign_keys = OFF;");
+function deleteUserById(userId) {
+    const query = `UPDATE users
+        SET
+            deleted_at = strftime('%s', 'now'),
+            status = 'inactive'
+        WHERE id = ?
+        AND ${NOT_DELETED}
+    `;
 
-        ALLOWED_TABLES_TO_MODIFY.forEach((table) => {
-            db.prepare(`DELETE FROM ${table}`).run();
-        });
+    const result = db.prepare(query).run(userId);
 
-        db.exec("PRAGMA foreign_keys = ON;");
-    });
-
-    tx();
+    return result.changes; // number of rows affected
 }
 
 
-function clearTable(tableName) {
-    if (!ALLOWED_TABLES_TO_MODIFY.includes(tableName)) {
-        throw new ApiError(500, "Invalid table name");
-    }
-
-    db.prepare(`DELETE FROM ${tableName}`).run();
-}
-
-export { clearAllTables, clearTable, createUser, findByEmail, findById, getAllUsers, getUserById, updateUserById };
+export { createUser, deleteUserById, findByEmail, findById, getAllUsers, getUserById, updateUserById };
 
 
 

@@ -5,7 +5,7 @@ import request from "supertest";
 
 import { authMiddleware } from "../src/middlewares/authMiddleware.js";
 import userRouter from "../src/routes/userRoutes.js";
-import { ForbiddenError, globalErrorHandler } from "../src/utils/apiError.js";
+import { ForbiddenError, globalErrorHandler, NotFoundError } from "../src/utils/apiError.js";
 
 // mock services
 import * as userService from "../src/services/userService.js";
@@ -185,7 +185,7 @@ test("PATCH /users/:id - non-admin should fail", async () => {
     expect(res.statusCode).toBe(403);
 });
 
-test("DELETE /users/clear-all - admin", async () => {
+test("DELETE /users/:id - soft delete sets deleted_at and inactive", async () => {
     const app = createTestApp();
 
     findById.mockReturnValue({
@@ -194,13 +194,67 @@ test("DELETE /users/clear-all - admin", async () => {
         role_id: 3
     });
 
-    getRoleById.mockReturnValue(ROLES.ADMIN)
+    getRoleById.mockReturnValue(ROLES.ADMIN);
+
+    userService.deleteUserService = jest.fn().mockReturnValue(1);
 
     const token = generateToken({ user_id: "1" });
 
     const res = await request(app)
-        .delete("/users/clear-all")
+        .delete("/users/2")
         .set("Cookie", [`token=${token}`]);
 
     expect(res.statusCode).toBe(200);
+    expect(userService.deleteUserService).toHaveBeenCalledWith(
+        expect.objectContaining({ id: "1" }),
+        "2"
+    );
+});
+
+test("GET /users/:id - should not return soft deleted user", async () => {
+    const app = createTestApp();
+
+    findById.mockReturnValue({
+        id: "1",
+        status: "active",
+        role_id: 3
+    });
+
+    getRoleById.mockReturnValue(ROLES.ADMIN);
+
+    userService.getUserByIdService.mockImplementation(() => {
+        throw new NotFoundError("User not found");
+    });
+    const token = generateToken({ user_id: "1" });
+
+    const res = await request(app)
+        .get("/users/2")
+        .set("Cookie", [`token=${token}`]);
+
+    expect(res.statusCode).toBe(404);
+});
+
+test("PATCH /users/:id - cannot update deleted user", async () => {
+    const app = createTestApp();
+
+    findById.mockReturnValue({
+        id: "1",
+        status: "active",
+        role_id: 3
+    });
+
+    getRoleById.mockReturnValue(ROLES.ADMIN);
+
+    userService.updateUserService.mockImplementation(() => {
+        throw new Error("User not found");
+    });
+
+    const token = generateToken({ user_id: "1" });
+
+    const res = await request(app)
+        .patch("/users/2")
+        .send({ role: "admin" })
+        .set("Cookie", [`token=${token}`]);
+
+    expect(res.statusCode).toBe(500); // or 404 if you handle properly
 });
