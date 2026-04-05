@@ -33,15 +33,17 @@ A backend API for a financial dashboard system, including JWT auth, role-based a
 
 ## Design Decisions
 
-**Layered architecture** — controllers handle request/response, services own business logic, repositories abstract the database.
+**Layered architecture**: controllers handle request/response, services own business logic, repositories abstract the database.
 
-**JWT authentication** — stateless, token passed via `Authorization` header. No server-side sessions. Tokens are valid until expiry; no blacklist is implemented.
+**JWT authentication**: stateless, token passed via cookies. No server-side sessions. Tokens are valid until expiry; no blacklist is implemented.
 
-**Token bucket rate limiting** — allows controlled bursts, applied at the middleware level. In future, a shared store (e.g. Redis) can be used for scaling to production.
+**Token bucket rate limiting**: allows controlled bursts, applied at the middleware level. In future, a shared store (e.g. Redis) can be used for scaling to production.
 
-**Pagination** — `page` and `limit` query params on all list endpoints. Simple offset-based; not optimal for very large datasets.
+**Pagination**: `page` and `limit` query params on all list endpoints. Simple offset-based; not optimal for very large datasets.
 
-**Soft delete + scheduled cleanup** — deletion sets `deleted_at`. All queries filter `WHERE deleted_at IS NULL`. A cron job permanently removes records older than 30 days.
+**Soft delete + scheduled cleanup**: deletion sets `deleted_at`. All queries filter `WHERE deleted_at IS NULL`. A cron job permanently removes records older than 30 days.
+
+**Language Choice**: I have focused on using Javascript since it is a major language for the web. I have refrained from using Typescript for simplicity and have used Sqlite for simplicity. I wanted to showcase more of my system and design decisions, instead of wasting time on syntax.
 
 ---
 
@@ -118,7 +120,7 @@ sqlite3 ./zorvyn.db # to access the database in the cli
 
 ## API Reference
 
-All record and summary routes require `Authorization: Bearer <token>`.
+All record and summary routes require `Cookie: <token>`.
 
 ### Auth
 
@@ -146,7 +148,7 @@ POST   /api/records
   "amount": 500,
   "type": "EXPENSE",
   "category": "food",
-  "date": 1710000000,
+  "date": "2-9-2025",   <!-- dd-mm-yyyy format -->
   "notes": "Lunch"
 }
 
@@ -207,4 +209,4 @@ GET /api/dashboard/weekly-trends
 - Categories are free-form strings
 - Rate limiting is per user for private routes and IP for public routes
 - No concurrency control
-- Moderate dataset size — no sharding needed
+- Moderate dataset size, so no sharding or replication needed
