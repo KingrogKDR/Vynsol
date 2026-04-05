@@ -1,27 +1,23 @@
-# zorvyn-sol
-
 A backend API for a financial dashboard system, including JWT auth, role-based access, pagination, rate limiting, soft deletes, and scheduled cleanup.
 
 ---
 
-## Table of Contents
+Table of Contents
 
-- [zorvyn-sol](#zorvyn-sol)
-  - [Table of Contents](#table-of-contents)
-  - [Architecture](#architecture)
-  - [Design Decisions](#design-decisions)
-  - [Database Schema](#database-schema)
-    - [Users](#users)
-    - [Role](#role)
-    - [Records](#records)
-  - [Setup](#setup)
-  - [API Reference](#api-reference)
-    - [Auth](#auth)
-    - [Records](#records-1)
-    - [Users](#users-1)
-    - [Dashboard Analytics](#dashboard-analytics)
-  - [Tradeoffs](#tradeoffs)
-  - [Assumptions](#assumptions)
+- [Architecture](#architecture)
+- [Design Decisions](#design-decisions)
+- [Database Schema](#database-schema)
+  - [Users](#users)
+  - [Role](#role)
+  - [Records](#records)
+- [Setup](#setup)
+- [API Reference](#api-reference)
+  - [Auth](#auth)
+  - [Records](#records-1)
+  - [Users](#users-1)
+  - [Dashboard Analytics](#dashboard-analytics)
+- [Tradeoffs](#tradeoffs)
+- [Assumptions](#assumptions)
 
 ---
 
