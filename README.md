@@ -1,5 +1,7 @@
 A backend API for a financial dashboard system, including JWT auth, role-based access, pagination, rate limiting, soft deletes, and scheduled cleanup.
 
+Designed and built from scratch, this system applies key backend engineering patterns including role-based access control (RBAC), stateless authentication (JWT), middleware-driven rate limiting, offset-based pagination, and background cleanup workflows, with a strong focus on data integrity, API design, and system extensibility.
+
 ---
 
 Table of Contents
@@ -109,6 +111,10 @@ npm run dev         # start server
 npm test            # run tests
 sqlite3 ./vyn.db # to access the database in the cli
 ```
+
+Run `npm run dev`during the first initialization to make sure the database tables and an admin user are seeded. Otherwise it may throw errors.
+
+I have seeded an admin user to make it easier for testing out the other endpoints.
 
 > The cron job currently runs only when the server runs and not in the background.
 
