@@ -92,8 +92,8 @@ Table of Contents
 ## Setup
 
 ```bash
-git clone git@github.com:KingrogKDR/vyn-sol.git
-# if ssh is not configured: git clone https://github.com/KingrogKDR/vyn-sol.git
+git clone git@github.com:KingrogKDR/Vynsol.git
+# if ssh is not configured: git clone https://github.com/KingrogKDR/Vynsol.git
 npm install
 ```
 
